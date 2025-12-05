@@ -58,9 +58,32 @@ class LandClassifier:
         self.load_models()
     
     def load_models(self):
-        """Load all available models into memory."""
+        """Load all available models into memory, downloading if necessary."""
+        import requests
+        
+        # Base URL for downloading models (backup source)
+        HF_BASE_URL = "https://huggingface.co/spaces/mvvhmxd1/Satellite-image-Land-Classification-Time-series-analysis/resolve/main/"
+        
         for model_key, config in MODEL_CONFIG.items():
             model_path = os.path.join(self.models_dir, config['path'])
+            
+            # Download if missing
+            if not os.path.exists(model_path):
+                print(f"⬇️ {config['name']} not found. Downloading from Hugging Face...")
+                try:
+                    url = HF_BASE_URL + config['path'] + "?download=true"
+                    response = requests.get(url, stream=True)
+                    if response.status_code == 200:
+                        with open(model_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        print(f"✓ Downloaded {config['name']}")
+                    else:
+                        print(f"✗ Failed download {config['name']}: Status {response.status_code}")
+                except Exception as e:
+                    print(f"✗ Error downloading {config['name']}: {e}")
+
+            # Load model
             if os.path.exists(model_path):
                 try:
                     self.models[model_key] = keras.models.load_model(model_path)
