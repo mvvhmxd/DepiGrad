@@ -33,5 +33,8 @@ RUN mkdir -p uploads
 # Expose port
 EXPOSE 5000
 
-# Run with gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "app:app"]
+# Default PORT if not set
+ENV PORT=5000
+
+# Run with gunicorn - use shell form so $PORT expands
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 app:app
