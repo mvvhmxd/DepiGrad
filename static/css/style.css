@@ -1085,3 +1085,93 @@ body::before {
     font-size: 0.7rem;
     color: var(--accent-primary);
 }
+
+/* Time Series UX Improvements */
+
+/* Compact upload zone when files are selected */
+.upload-zone.compact {
+    padding: var(--spacing-sm);
+    min-height: 60px;
+}
+
+.upload-zone.compact .upload-icon {
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.upload-zone.compact .upload-text {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+}
+
+.upload-zone.compact .upload-hint {
+    display: none;
+}
+
+/* Series thumbnail preview container */
+.series-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.series-thumbnail {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-fast);
+}
+
+.series-thumbnail:hover {
+    border-color: var(--accent-primary);
+}
+
+.series-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.series-thumbnail .remove-thumb {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--error);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.series-thumbnail:hover .remove-thumb {
+    opacity: 1;
+}
+
+/* Timeline image thumbnails */
+.timeline-item .timeline-img {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+}
+
+.timeline-item.changed .timeline-img {
+    border-color: var(--warning);
+}

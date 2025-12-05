@@ -553,9 +553,53 @@ function handleSeriesFiles(files) {
     seriesFilesList = [...seriesFilesList, ...validFiles];
 
     if (seriesFilesList.length > 0) {
-        seriesUploadZone.style.display = 'none';
+        // Keep upload zone visible but smaller
+        seriesUploadZone.classList.add('compact');
         seriesFiles.style.display = 'flex';
-        seriesCount.textContent = `${seriesFilesList.length} images selected`;
+        updateSeriesPreview();
+        analyzeSeriesBtn.disabled = seriesFilesList.length < 2;
+    }
+}
+
+function updateSeriesPreview() {
+    // Update count
+    seriesCount.textContent = `${seriesFilesList.length} images selected`;
+
+    // Show thumbnails
+    let previewContainer = document.getElementById('seriesPreviewContainer');
+    if (!previewContainer) {
+        previewContainer = document.createElement('div');
+        previewContainer.id = 'seriesPreviewContainer';
+        previewContainer.className = 'series-preview-container';
+        seriesFiles.insertBefore(previewContainer, seriesFiles.firstChild);
+    }
+    previewContainer.innerHTML = '';
+
+    seriesFilesList.forEach((file, index) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'series-thumbnail';
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.alt = `Image ${index + 1}`;
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-thumb';
+        removeBtn.innerHTML = '×';
+        removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            removeSeriesFile(index);
+        };
+        thumb.appendChild(img);
+        thumb.appendChild(removeBtn);
+        previewContainer.appendChild(thumb);
+    });
+}
+
+function removeSeriesFile(index) {
+    seriesFilesList.splice(index, 1);
+    if (seriesFilesList.length === 0) {
+        clearSeriesFiles();
+    } else {
+        updateSeriesPreview();
         analyzeSeriesBtn.disabled = seriesFilesList.length < 2;
     }
 }
@@ -563,8 +607,10 @@ function handleSeriesFiles(files) {
 function clearSeriesFiles() {
     seriesFilesList = [];
     seriesInput.value = '';
-    seriesUploadZone.style.display = 'flex';
+    seriesUploadZone.classList.remove('compact');
     seriesFiles.style.display = 'none';
+    const previewContainer = document.getElementById('seriesPreviewContainer');
+    if (previewContainer) previewContainer.innerHTML = '';
     analyzeSeriesBtn.disabled = true;
 }
 
@@ -642,14 +688,22 @@ function displayTimeSeriesResults(result) {
         });
     }
 
-    // Build timeline grid
+    // Build timeline grid with images
     timelineGrid.innerHTML = '';
     const classes = result.timeline.classes;
     result.results.forEach((r, i) => {
         const changed = i > 0 && classes[i] !== classes[i - 1];
         const item = document.createElement('div');
         item.className = `timeline-item ${changed ? 'changed' : ''}`;
+
+        // Create image thumbnail from uploaded file
+        let imgHtml = '';
+        if (seriesFilesList[i]) {
+            imgHtml = `<img src="${URL.createObjectURL(seriesFilesList[i])}" alt="T${i + 1}" class="timeline-img">`;
+        }
+
         item.innerHTML = `
+            ${imgHtml}
             <div class="time-label">${r.date}</div>
             <div class="time-class">${displayName(r.predicted_class)}</div>
             <div class="time-conf">${r.confidence.toFixed(1)}%</div>
