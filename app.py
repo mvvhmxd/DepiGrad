@@ -38,6 +38,12 @@ def index():
     return render_template('index.html', models=models, classes=CLASS_NAMES)
 
 
+@app.route('/health')
+def health():
+    """Health check endpoint for Render."""
+    return 'OK', 200
+
+
 @app.route('/models', methods=['GET'])
 def get_models():
     """Return available models information."""
