@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: land-classifier
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "2"
+    healthCheckPath: /
+    plan: free
