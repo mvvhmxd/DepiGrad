@@ -24,18 +24,23 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
+# Cache bust - change this to force rebuild
+ARG CACHEBUST=1
+
+# Copy ALL application files including models
 COPY . .
+
+# Debug: List model files
+RUN ls -la *.h5 || echo "No .h5 files found!"
 
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Copy and make start script executable
-COPY start.sh .
+# Make start script executable
 RUN chmod +x start.sh
 
 # Expose port
-EXPOSE 7860
+EXPOSE 5000
 
 # Run the start script
 CMD ["./start.sh"]
