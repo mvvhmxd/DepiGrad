@@ -30,11 +30,12 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p uploads
 
+# Copy and make start script executable
+COPY start.sh .
+RUN chmod +x start.sh
+
 # Expose port
 EXPOSE 5000
 
-# Default PORT if not set
-ENV PORT=5000
-
-# Run with gunicorn - use shell form so $PORT expands
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 app:app
+# Run the start script
+CMD ["./start.sh"]
