@@ -35,7 +35,7 @@ COPY start.sh .
 RUN chmod +x start.sh
 
 # Expose port
-EXPOSE 5000
+EXPOSE 7860
 
 # Run the start script
 CMD ["./start.sh"]
