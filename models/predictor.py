@@ -96,7 +96,29 @@ class LandClassifier:
     def preprocess_image(self, image_path, model_key):
         """Preprocess image for the specified model."""
         config = MODEL_CONFIG[model_key]
-        img = Image.open(image_path)
+        
+        # Handle TIF/TIFF files with tifffile library
+        if image_path.lower().endswith(('.tif', '.tiff')):
+            try:
+                import tifffile
+                img_array = tifffile.imread(image_path)
+                # Convert to PIL Image for resizing
+                if len(img_array.shape) == 2:
+                    img = Image.fromarray(img_array.astype(np.uint8))
+                elif img_array.shape[2] > 4:
+                    # Multi-band TIF, take first 3 or 4 bands
+                    img_array = img_array[:, :, :3]
+                    img = Image.fromarray(img_array.astype(np.uint8))
+                else:
+                    # Normalize if values are outside 0-255
+                    if img_array.max() > 255:
+                        img_array = (img_array / img_array.max() * 255).astype(np.uint8)
+                    img = Image.fromarray(img_array.astype(np.uint8))
+            except Exception as e:
+                print(f"TIF loading error: {e}, trying Pillow...")
+                img = Image.open(image_path)
+        else:
+            img = Image.open(image_path)
         
         # Resize to expected input size
         target_size = (config['input_shape'][0], config['input_shape'][1])

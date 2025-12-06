@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Land Classification System - Technical Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background: #fff;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+            border-bottom: 3px solid #6366f1;
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            color: #4b5563;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        .header-info {
+            margin-bottom: 2rem;
+            color: #6b7280;
+        }
+
+        .header-info p {
+            margin-bottom: 0.25rem;
+        }
+
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #1a1a2e;
+            color: #e5e7eb;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .highlight h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        .diagram {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🛰️ Land Classification System</h1>
+    <p style="font-size: 1.3rem; color: #6b7280; margin-bottom: 0.5rem;">Technical Report: Model Integration &
+        Deployment</p>
+
+    <div class="header-info">
+        <p><strong>Project:</strong> DEPI Graduation Project 2025</p>
+        <p><strong>Author:</strong> Mahmoud Mohamed Balash</p>
+        <p><strong>Date:</strong> December 6, 2025</p>
+        <p><strong>Repository:</strong> <a href="https://github.com/mvvhmxd/DepiGrad">github.com/mvvhmxd/DepiGrad</a>
+        </p>
+        <p><strong>Live URL:</strong> <a
+                href="https://depigrad-production.up.railway.app">depigrad-production.up.railway.app</a></p>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <p>
+        This report documents the development and deployment of a satellite image land classification web application.
+        The system integrates three deep learning models (RGB, RGB+NIR, NDVI) trained on the EuroSAT dataset to classify
+        land cover types from satellite imagery. The application provides single-image classification, multi-model
+        comparison,
+        Grad-CAM heatmap visualization, and time-series change detection capabilities.
+    </p>
+
+    <div class="highlight">
+        <h3>Key Achievements</h3>
+        <ul style="color: white; margin-bottom: 0;">
+            <li>Successfully integrated 3 TensorFlow/Keras models (~96MB total)</li>
+            <li>Built responsive Flask web application with modern UI</li>
+            <li>Implemented advanced features: heatmaps, model comparison, time-series analysis</li>
+            <li>Deployed to Railway cloud platform with Docker containerization</li>
+        </ul>
+    </div>
+
+    <h2>2. System Architecture</h2>
+
+    <h3>2.1 Technology Stack</h3>
+    <table>
+        <tr>
+            <th>Component</th>
+            <th>Technology</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>Backend</td>
+            <td>Flask 2.3.3</td>
+            <td>Web framework, REST API endpoints</td>
+        </tr>
+        <tr>
+            <td>ML Framework</td>
+            <td>TensorFlow 2.16.1</td>
+            <td>Model loading, inference, Keras 3 support</td>
+        </tr>
+        <tr>
+            <td>Image Processing</td>
+            <td>Pillow 10.0.0, NumPy 1.26.4</td>
+            <td>Image preprocessing, array operations</td>
+        </tr>
+        <tr>
+            <td>Production Server</td>
+            <td>Gunicorn 21.2.0</td>
+            <td>WSGI HTTP server</td>
+        </tr>
+        <tr>
+            <td>Frontend</td>
+            <td>HTML5, CSS3, JavaScript</td>
+            <td>User interface, Chart.js visualizations</td>
+        </tr>
+        <tr>
+            <td>Containerization</td>
+            <td>Docker</td>
+            <td>Consistent deployment environment</td>
+        </tr>
+        <tr>
+            <td>Hosting</td>
+            <td>Railway</td>
+            <td>Cloud deployment platform</td>
+        </tr>
+    </table>
+
+    <h3>2.2 Application Architecture Diagram</h3>
+    <div class="diagram">
+        <pre style="background: none; color: #1a1a2e; text-align: left;">
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT (Browser)                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
+│  │ Image Upload │  │ Model Select │  │ Results Visualization│   │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ HTTP Requests
+┌─────────────────────────────────────────────────────────────────┐
+│                     FLASK WEB SERVER                             │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                    app.py (Routes)                        │   │
+│  │  /predict    /compare    /heatmap    /analyze-series     │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              models/predictor.py (LandClassifier)         │   │
+│  │  • load_models()    • predict()    • generate_heatmap()  │   │
+│  │  • preprocess_image()    • compare_all()                 │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌────────────────┐ ┌────────────────┐ ┌─────────────────────┐  │
+│  │ model_rgb_v0.h5│ │model_RGB_NIR.h5│ │  model_NDVI_v2.h5   │  │
+│  │    (28 MB)     │ │    (28 MB)     │ │      (40 MB)        │  │
+│  └────────────────┘ └────────────────┘ └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+</pre>
+    </div>
+
+    <h2 class="page-break">3. Model Integration Details</h2>
+
+    <h3>3.1 Model Specifications</h3>
+    <p>The application uses three convolutional neural network models trained on the EuroSAT dataset:</p>
+
+    <table>
+        <tr>
+            <th>Model</th>
+            <th>Input Shape</th>
+            <th>Channels</th>
+            <th>File Size</th>
+            <th>Use Case</th>
+        </tr>
+        <tr>
+            <td>RGB Model</td>
+            <td>64×64×3</td>
+            <td>Red, Green, Blue</td>
+            <td>28 MB</td>
+            <td>Standard satellite imagery</td>
+        </tr>
+        <tr>
+            <td>RGB+NIR Model</td>
+            <td>64×64×4</td>
+            <td>RGB + Near-Infrared</td>
+            <td>28 MB</td>
+            <td>Enhanced vegetation detection</td>
+        </tr>
+        <tr>
+            <td>NDVI Model</td>
+            <td>64×64×1</td>
+            <td>Vegetation Index</td>
+            <td>40 MB</td>
+            <td>Vegetation health analysis</td>
+        </tr>
+    </table>
+
+    <h3>3.2 Classification Classes</h3>
+    <p>The models classify satellite images into 10 land cover categories (EuroSAT standard):</p>
+    <ol>
+        <li><strong>AnnualCrop</strong> - Agricultural land with annual crops</li>
+        <li><strong>Forest</strong> - Forested areas</li>
+        <li><strong>HerbaceousVegetation</strong> - Grasslands and meadows</li>
+        <li><strong>Highway</strong> - Roads and transportation infrastructure</li>
+        <li><strong>Industrial</strong> - Industrial zones and facilities</li>
+        <li><strong>Pasture</strong> - Grazing lands</li>
+        <li><strong>PermanentCrop</strong> - Orchards, vineyards</li>
+        <li><strong>Residential</strong> - Urban residential areas</li>
+        <li><strong>River</strong> - Water bodies (rivers, streams)</li>
+        <li><strong>SeaLake</strong> - Large water bodies (seas, lakes)</li>
+    </ol>
+
+    <h3>3.3 LandClassifier Class Implementation</h3>
+    <p>The core model integration is handled by the <code>LandClassifier</code> class in
+        <code>models/predictor.py</code>:</p>
+
+    <pre><code>class LandClassifier:
+    """Handles model loading and predictions for land classification."""
+    
+    def __init__(self, models_dir='.'):
+        self.models_dir = models_dir
+        self.models = {}
+        self.load_models()
+    
+    def load_models(self):
+        """Load all available models into memory."""
+        for model_key, config in MODEL_CONFIG.items():
+            model_path = os.path.join(self.models_dir, config['path'])
+            if os.path.exists(model_path):
+                self.models[model_key] = keras.models.load_model(model_path)
+                print(f"✓ Loaded {config['name']}")
+    
+    def predict(self, image_path, model_key='rgb'):
+        """Run prediction on an image using the specified model."""
+        img_array = self.preprocess_image(image_path, model_key)
+        predictions = self.models[model_key].predict(img_array)[0]
+        # ... process and return results</code></pre>
+
+    <h3>3.4 Image Preprocessing Pipeline</h3>
+    <p>Each model requires specific preprocessing based on its input requirements:</p>
+
+    <pre><code>def preprocess_image(self, image_path, model_key):
+    config = MODEL_CONFIG[model_key]
+    img = Image.open(image_path)
+    
+    # Resize to 64x64 (model input size)
+    img = img.resize((64, 64), Image.Resampling.LANCZOS)
+    img_array = np.array(img, dtype=np.float32)
+    
+    # Channel conversion based on model type
+    if model_key == 'ndvi':
+        # Convert to grayscale for NDVI
+        img_array = np.mean(img_array, axis=2, keepdims=True)
+    elif model_key == 'rgb_nir':
+        # Add synthetic NIR channel
+        nir = np.mean(img_array, axis=2, keepdims=True)
+        img_array = np.concatenate([img_array, nir], axis=-1)
+    
+    # Normalize to [0, 1]
+    img_array = img_array / 255.0
+    
+    # Add batch dimension
+    return np.expand_dims(img_array, axis=0)</code></pre>
+
+    <h2 class="page-break">4. Web Application Features</h2>
+
+    <h3>4.1 API Endpoints</h3>
+    <table>
+        <tr>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><code>/</code></td>
+            <td>GET</td>
+            <td>Serves the main dashboard UI</td>
+        </tr>
+        <tr>
+            <td><code>/models</code></td>
+            <td>GET</td>
+            <td>Returns list of available models with status</td>
+        </tr>
+        <tr>
+            <td><code>/predict</code></td>
+            <td>POST</td>
+            <td>Single model prediction on uploaded image</td>
+        </tr>
+        <tr>
+            <td><code>/compare</code></td>
+            <td>POST</td>
+            <td>Run all models and return consensus</td>
+        </tr>
+        <tr>
+            <td><code>/heatmap</code></td>
+            <td>POST</td>
+            <td>Generate activation heatmap visualization</td>
+        </tr>
+        <tr>
+            <td><code>/analyze-series</code></td>
+            <td>POST</td>
+            <td>Time-series change detection on multiple images</td>
+        </tr>
+        <tr>
+            <td><code>/health</code></td>
+            <td>GET</td>
+            <td>Health check endpoint for deployment</td>
+        </tr>
+    </table>
+
+    <h3>4.2 Feature Implementations</h3>
+
+    <h4>4.2.1 Single Image Prediction</h4>
+    <p>Users upload a satellite image and select one of three models. The system returns:</p>
+    <ul>
+        <li>Predicted land class with confidence percentage</li>
+        <li>Probability distribution across all 10 classes</li>
+        <li>Interactive bar chart visualization</li>
+    </ul>
+
+    <h4>4.2.2 Model Comparison</h4>
+    <p>The "Compare All" feature runs all available models simultaneously and provides:</p>
+    <ul>
+        <li>Side-by-side prediction results from each model</li>
+        <li>Consensus prediction (most common result)</li>
+        <li>Agreement percentage across models</li>
+    </ul>
+
+    <h4>4.2.3 Grad-CAM Heatmap</h4>
+    <p>Visualizes which image regions most influenced the model's classification decision using gradient-weighted class
+        activation mapping.</p>
+
+    <h4>4.2.4 Time-Series Analysis</h4>
+    <p>Analyzes multiple satellite images from different time periods to detect land use changes:</p>
+    <ul>
+        <li>Upload 2+ images representing different time points</li>
+        <li>Automatic change detection between consecutive images</li>
+        <li>Visual timeline with confidence trends</li>
+        <li>Thumbnail previews of uploaded images in results</li>
+    </ul>
+
+    <h2 class="page-break">5. Deployment Process</h2>
+
+    <h3>5.1 Docker Configuration</h3>
+    <p>The application is containerized using Docker for consistent deployment:</p>
+
+    <pre><code># Dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies for image processing
+RUN apt-get update && apt-get install -y \
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application files and models
+COPY . .
+
+# Make start script executable
+RUN chmod +x start.sh
+
+EXPOSE 5000
+
+CMD ["./start.sh"]</code></pre>
+
+    <h3>5.2 Start Script</h3>
+    <p>The <code>start.sh</code> script handles dynamic port binding for cloud platforms:</p>
+
+    <pre><code>#!/bin/bash
+PORT=${PORT:-5000}
+echo "Starting server on port $PORT"
+exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 app:app</code></pre>
+
+    <h3>5.3 Railway Deployment</h3>
+
+    <h4>5.3.1 Railway Configuration (railway.toml)</h4>
+    <pre><code>[build]
+builder = "DOCKERFILE"
+dockerfilePath = "./Dockerfile"
+
+[deploy]
+startCommand = "./start.sh"</code></pre>
+
+    <h4>5.3.2 Deployment Steps</h4>
+    <ol>
+        <li><strong>GitHub Repository Setup:</strong> Push code to <code>github.com/mvvhmxd/DepiGrad</code></li>
+        <li><strong>Railway Project Creation:</strong> Create new project on Railway connected to GitHub repo</li>
+        <li><strong>Automatic Builds:</strong> Railway detects Dockerfile and builds container automatically</li>
+        <li><strong>Domain Generation:</strong> Generate public domain URL in Railway settings</li>
+        <li><strong>Environment:</strong> Railway automatically sets <code>$PORT</code> environment variable</li>
+    </ol>
+
+    <h3>5.4 Challenges & Solutions</h3>
+
+    <table>
+        <tr>
+            <th>Challenge</th>
+            <th>Solution</th>
+        </tr>
+        <tr>
+            <td>Large model files (96MB) timing out during git push</td>
+            <td>Used <code>git lfs migrate export</code> to convert LFS pointers to regular files</td>
+        </tr>
+        <tr>
+            <td>TensorFlow version mismatch ("batch_shape" error)</td>
+            <td>Upgraded from TensorFlow 2.15 to 2.16.1 for Keras 3 compatibility</td>
+        </tr>
+        <tr>
+            <td>Dynamic port binding on cloud platforms</td>
+            <td>Created <code>start.sh</code> script with <code>${PORT:-5000}</code> fallback</td>
+        </tr>
+        <tr>
+            <td>Docker build caching old files</td>
+            <td>Added <code>ARG CACHEBUST=1</code> to force fresh builds</td>
+        </tr>
+    </table>
+
+    <h2>6. Project Structure</h2>
+    <pre><code>DepiGrad/
+├── app.py                    # Flask application entry point
+├── requirements.txt          # Python dependencies
+├── Dockerfile               # Docker container configuration
+├── start.sh                 # Production server startup script
+├── railway.toml             # Railway deployment configuration
+├── model_rgb_v0.h5          # RGB model (28 MB)
+├── model_RGB_NIR_v0.h5      # RGB+NIR model (28 MB)
+├── model_NDVI_v2.h5         # NDVI model (40 MB)
+├── models/
+│   ├── __init__.py
+│   └── predictor.py         # LandClassifier class
+├── templates/
+│   └── index.html           # Main dashboard template
+├── static/
+│   ├── css/style.css        # Stylesheet
+│   └── js/app.js            # Frontend JavaScript
+└── uploads/                 # Temporary upload directory</code></pre>
+
+    <h2>7. Conclusion</h2>
+    <p>
+        This project successfully demonstrates the integration of deep learning models into a production web
+        application.
+        The system provides an intuitive interface for satellite image land classification with advanced features like
+        multi-model comparison and time-series analysis. The Docker-based deployment ensures consistent behavior across
+        development and production environments, while Railway provides a reliable cloud hosting solution with automatic
+        scaling and deployment from GitHub.
+    </p>
+
+    <div class="highlight">
+        <h3>Future Improvements</h3>
+        <ul style="color: white; margin-bottom: 0;">
+            <li>Add user authentication and project management</li>
+            <li>Implement batch processing for multiple images</li>
+            <li>Add export functionality for analysis reports</li>
+            <li>Integrate real-time satellite data APIs</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>Land Classification System - DEPI Graduation Project 2025</p>
+        <p>Generated: December 6, 2025</p>
+    </div>
+
+</body>
+
+</html>
