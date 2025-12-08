@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Land Classification Dashboard | Satellite Image Analysis</title>
+    <meta name="description" content="AI-powered satellite image land classification using deep learning models">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fa-solid fa-satellite logo-icon"></i>
+                <div class="logo-text">
+                    <h1>Land Classification</h1>
+                    <span class="subtitle">Satellite Image Analysis</span>
+                </div>
+            </div>
+
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel - Upload & Controls -->
+            <section class="control-panel">
+                <div class="card">
+                    <h2 class="card-title">
+                        <i class="fa-solid fa-brain title-icon"></i>
+                        Select Model
+                    </h2>
+                    <div class="model-selector">
+                        {% for model in models %}
+                        <label class="model-option {% if loop.first %}active{% endif %}">
+                            <input type="radio" name="model" value="{{ model.key }}" {% if loop.first %}checked{% endif
+                                %} {% if not model.loaded %}disabled{% endif %}>
+                            <div class="model-card">
+                                <div class="model-header">
+                                    <span class="model-name">{{ model.name }}</span>
+                                    <span
+                                        class="model-status {% if model.loaded %}loaded{% else %}unavailable{% endif %}">
+                                        {{ 'Ready' if model.loaded else 'Not Available' }}
+                                    </span>
+                                </div>
+                                <p class="model-description">{{ model.description }}</p>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">
+                        <i class="fa-solid fa-image title-icon"></i>
+                        Upload Image
+                    </h2>
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-content">
+                            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                            <p class="upload-text">Drag & drop satellite image</p>
+                            <span class="upload-hint">or click to browse</span>
+                            <span class="upload-formats">PNG, JPG, TIFF supported</span>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*,.tif,.tiff" hidden>
+                    </div>
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImg" src="" alt="Preview">
+                        <button class="remove-btn" id="removeImage">✕</button>
+                    </div>
+                    <div class="button-group">
+                        <button class="predict-btn" id="predictBtn" disabled>
+                            <i class="fa-solid fa-magnifying-glass-chart"></i>
+                            <span class="btn-text">Analyze</span>
+                            <span class="btn-loader" style="display: none;"></span>
+                        </button>
+                        <button class="compare-btn" id="compareBtn" disabled>
+                            <i class="fa-solid fa-code-compare"></i>
+                            <span class="btn-text">Compare All</span>
+                            <span class="btn-loader" style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Time-Series Card -->
+                <div class="card time-series-card">
+                    <h2 class="card-title">
+                        <i class="fa-solid fa-timeline title-icon"></i>
+                        Time-Series Analysis
+                    </h2>
+                    <p class="card-description">Upload multiple images from different times to detect land use changes.
+                    </p>
+                    <div class="series-upload-zone" id="seriesUploadZone">
+                        <div class="series-upload-content">
+                            <i class="fa-solid fa-images upload-icon"></i>
+                            <p class="upload-text">Drop multiple images</p>
+                            <span class="upload-hint">or click to select (min 2 images)</span>
+                        </div>
+                        <input type="file" id="seriesInput" accept="image/*,.tif,.tiff" multiple hidden>
+                    </div>
+                    <div class="series-files" id="seriesFiles" style="display: none;">
+                        <span class="series-count" id="seriesCount">0 images selected</span>
+                        <button class="clear-series-btn" id="clearSeries">Clear</button>
+                    </div>
+                    <button class="analyze-series-btn" id="analyzeSeriesBtn" disabled>
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span class="btn-text">Analyze Changes</span>
+                        <span class="btn-loader" style="display: none;"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel - Results -->
+            <section class="results-panel">
+                <div class="card results-card" id="resultsCard">
+                    <div class="empty-state" id="emptyState">
+                        <i class="fa-solid fa-earth-americas empty-icon"></i>
+                        <h3>Ready for Analysis</h3>
+                        <p>Upload a satellite image to classify the land type using deep learning</p>
+                    </div>
+
+                    <div class="results-content" id="resultsContent" style="display: none;">
+                        <div class="result-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-chart-simple title-icon"></i>
+                                Classification Results
+                            </h2>
+                            <span class="model-badge" id="modelUsed"></span>
+                        </div>
+
+                        <div class="prediction-main">
+                            <div class="top-prediction">
+                                <span class="prediction-label">Predicted Class</span>
+                                <span class="prediction-class" id="predictedClass">-</span>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="confidenceFill"></div>
+                                </div>
+                                <span class="confidence-value" id="confidenceValue">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Heatmap Section -->
+                        <div class="heatmap-section">
+                            <div class="heatmap-header">
+                                <h3 class="section-title">
+                                    <i class="fa-solid fa-fire title-icon"></i>
+                                    Model Focus (Grad-CAM)
+                                </h3>
+                                <button class="heatmap-toggle" id="heatmapToggle">
+                                    <i class="fa-solid fa-eye"></i>
+                                    <span>Show Heatmap</span>
+                                </button>
+                            </div>
+                            <div class="heatmap-container" id="heatmapContainer" style="display: none;">
+                                <div class="heatmap-images">
+                                    <div class="heatmap-item">
+                                        <span class="heatmap-label">Overlay</span>
+                                        <img id="heatmapOverlay" src="" alt="Heatmap Overlay">
+                                    </div>
+                                    <div class="heatmap-item">
+                                        <span class="heatmap-label">Heatmap Only</span>
+                                        <img id="heatmapOnly" src="" alt="Heatmap">
+                                    </div>
+                                </div>
+                                <p class="heatmap-note">Red areas indicate regions that most influenced the
+                                    classification decision.</p>
+                            </div>
+                        </div>
+
+                        <div class="chart-section">
+                            <h3 class="section-title">Probability Distribution</h3>
+                            <div class="chart-container">
+                                <canvas id="probabilityChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="all-predictions">
+                            <h3 class="section-title">All Classes</h3>
+                            <div class="predictions-grid" id="predictionsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison View -->
+                    <div class="comparison-content" id="comparisonContent" style="display: none;">
+                        <div class="result-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-code-compare title-icon"></i>
+                                Model Comparison
+                            </h2>
+                        </div>
+
+                        <div class="consensus-box" id="consensusBox">
+                            <span class="consensus-label">Consensus</span>
+                            <span class="consensus-class" id="consensusClass">-</span>
+                            <span class="agreement-value" id="agreementValue">0% agreement</span>
+                        </div>
+
+                        <div class="comparison-grid" id="comparisonGrid">
+                            <!-- Model comparison cards will be inserted here -->
+                        </div>
+
+                        <div class="chart-section">
+                            <h3 class="section-title">Confidence Comparison</h3>
+                            <div class="chart-container">
+                                <canvas id="comparisonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time-Series View -->
+                    <div class="timeseries-content" id="timeseriesContent" style="display: none;">
+                        <div class="result-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-timeline title-icon"></i>
+                                Time-Series Analysis
+                            </h2>
+                            <span class="model-badge" id="seriesModelUsed"></span>
+                        </div>
+
+                        <div class="change-summary" id="changeSummary">
+                            <div class="change-stat">
+                                <span class="stat-value" id="totalImages">0</span>
+                                <span class="stat-label">Images Analyzed</span>
+                            </div>
+                            <div class="change-stat">
+                                <span class="stat-value" id="changeCount">0</span>
+                                <span class="stat-label">Changes Detected</span>
+                            </div>
+                        </div>
+
+                        <div class="changes-list" id="changesList">
+                            <!-- Change items will be inserted here -->
+                        </div>
+
+                        <div class="chart-section">
+                            <h3 class="section-title">Classification Timeline</h3>
+                            <div class="chart-container timeline-chart">
+                                <canvas id="timelineChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="timeline-grid" id="timelineGrid">
+                            <!-- Timeline items will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Land Classification System & Time-series Analysis • DEPI Graduation Project 2025</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>
